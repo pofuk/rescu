@@ -43,23 +43,24 @@ public final class RestProxyFactory {
      * @param interceptors  The interceptors that will be able to intercept all proxy method calls
      * @return a proxy implementation of restInterface
      */
-    public static <I> I createProxy(Class<I> restInterface, String baseUrl, ClientConfig config, Interceptor... interceptors) {
-        return createProxy(restInterface, wrap(new RestInvocationHandler(restInterface, baseUrl, config), interceptors));
+    public static <I> I createProxy(final Class<I> restInterface, final String baseUrl, final ApiContext
+                                    context, final Interceptor... interceptors) {
+        return createProxy(restInterface, wrap(new RestInvocationHandler(restInterface, baseUrl, context), interceptors));
     }
 
-    static InvocationHandler wrap(InvocationHandler handler, Interceptor... interceptors) {
-        for (Interceptor interceptor : interceptors) {
+    static InvocationHandler wrap(InvocationHandler handler, final Interceptor... interceptors) {
+        for (final Interceptor interceptor : interceptors) {
             handler = new InterceptedInvocationHandler(interceptor, handler);
         }
         return handler;
     }
 
-    public static <I> I createProxy(Class<I> restInterface, String baseUrl) {
+    public static <I> I createProxy(final Class<I> restInterface, final String baseUrl) {
         return createProxy(restInterface, baseUrl, null);
     }
 
-    static <I> I createProxy(Class<I> restInterface, InvocationHandler restInvocationHandler, Interceptor... interceptors) {
-        Object proxy = Proxy.newProxyInstance(restInterface.getClassLoader(), new Class[]{restInterface}, wrap(restInvocationHandler, interceptors));
+    static <I> I createProxy(final Class<I> restInterface, final InvocationHandler restInvocationHandler, final Interceptor... interceptors) {
+        final Object proxy = Proxy.newProxyInstance(restInterface.getClassLoader(), new Class[]{restInterface}, wrap(restInvocationHandler, interceptors));
         // noinspection unchecked
         return (I) proxy;
     }

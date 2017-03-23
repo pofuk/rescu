@@ -25,6 +25,8 @@ package si.mazi.rescu;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Collections;
+import java.util.Map;
 
 class TestRestInvocationHandler extends RestInvocationHandler {
 
@@ -32,28 +34,39 @@ class TestRestInvocationHandler extends RestInvocationHandler {
     private final int responseStatusCode;
     private final String responseBody;
 
-    public TestRestInvocationHandler(Class<?> restInterface, ClientConfig config,
-                                     String responseBody, int responseStatusCode) {
+    public TestRestInvocationHandler(final Class<?> restInterface, final ClientConfig config,
+                                     final String responseBody, final int responseStatusCode) {
         this(restInterface, config, responseBody, responseStatusCode, "https://example.com");
     }
 
-    public TestRestInvocationHandler(Class<?> restInterface, ClientConfig config,
-                                     String responseBody, int responseStatusCode, String baseUrl) {
-        super(restInterface, baseUrl, config);
+    public TestRestInvocationHandler(final Class<?> restInterface, final ClientConfig config,
+                                     final String responseBody, final int responseStatusCode, final String baseUrl) {
+        super(restInterface, baseUrl, new ApiContext() {
+
+            @Override
+            public Map<String, String> getHeaders() {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public ClientConfig getClientConfig() {
+                return config;
+            }
+        });
 
         this.responseStatusCode = responseStatusCode;
         this.responseBody = responseBody;
     }
 
     @Override
-    protected HttpURLConnection invokeHttp(RestInvocation invocation) {
+    protected HttpURLConnection invokeHttp(final RestInvocation invocation) {
         this.invocation = invocation;
         return null;
     }
 
     @Override
-    protected Object receiveAndMap(RestMethodMetadata methodMetadata, HttpURLConnection connection) throws IOException {
-        InvocationResult invocationResult = new InvocationResult(getResponseBody(), getResponseStatusCode());
+    protected Object receiveAndMap(final RestMethodMetadata methodMetadata, final HttpURLConnection connection) throws IOException {
+        final InvocationResult invocationResult = new InvocationResult(getResponseBody(), getResponseStatusCode());
         return mapInvocationResult(invocationResult, methodMetadata);
     }
 

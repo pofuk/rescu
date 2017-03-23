@@ -21,24 +21,27 @@
  */
 package si.mazi.rescu;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import si.mazi.rescu.serialization.PlainTextResponseReader;
-import si.mazi.rescu.serialization.ToStringRequestWriter;
-import si.mazi.rescu.serialization.jackson.DefaultJacksonObjectMapperFactory;
-import si.mazi.rescu.serialization.jackson.JacksonObjectMapperFactory;
-import si.mazi.rescu.serialization.jackson.JacksonRequestWriter;
-import si.mazi.rescu.serialization.jackson.JacksonResponseReader;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import si.mazi.rescu.serialization.PlainTextResponseReader;
+import si.mazi.rescu.serialization.ToStringRequestWriter;
+import si.mazi.rescu.serialization.jackson.DefaultJacksonObjectMapperFactory;
+import si.mazi.rescu.serialization.jackson.JacksonObjectMapperFactory;
+import si.mazi.rescu.serialization.jackson.JacksonRequestWriter;
+import si.mazi.rescu.serialization.jackson.JacksonResponseReader;
 
 /**
  * @author Matija Mazi
@@ -53,26 +56,30 @@ public class RestInvocationHandler implements InvocationHandler {
     private final HttpTemplate httpTemplate;
     private final String intfacePath;
     private final String baseUrl;
-    private final ClientConfig config;
+    private ApiContext context;
+    private ClientConfig config;
+
 
     private final Map<Method, RestMethodMetadata> methodMetadataCache = new HashMap<>();
 
-    RestInvocationHandler(Class<?> restInterface, String url, ClientConfig config) {
+    RestInvocationHandler(final Class<?> restInterface, final String url, final ApiContext context) {
         this.intfacePath = restInterface.getAnnotation(Path.class).value();
         this.baseUrl = url;
 
         if (config == null) {
-            config = new ClientConfig(); //default config
+            this.context = new DefaultApiContext();
+            this.config =  context.getClientConfig();
         }
 
-        this.config = config;
+        this.context = context;
+        this.config = context.getClientConfig();
 
         //setup default readers/writers
         JacksonObjectMapperFactory mapperFactory = config.getJacksonObjectMapperFactory();
         if (mapperFactory == null) {
             mapperFactory = new DefaultJacksonObjectMapperFactory();
         }
-        ObjectMapper mapper = mapperFactory.createObjectMapper();
+        final ObjectMapper mapper = mapperFactory.createObjectMapper();
 
         requestWriterResolver = new RequestWriterResolver();
         /*requestWriterResolver.addWriter(null,
@@ -90,7 +97,7 @@ public class RestInvocationHandler implements InvocationHandler {
         responseReaderResolver.addReader(MediaType.TEXT_PLAIN,
                 new PlainTextResponseReader(this.config.isIgnoreHttpErrorCodes()));
 
-                //setup http client
+        //setup http client
         this.httpTemplate = new HttpTemplate(
                 this.config.getHttpConnTimeout(),
                 this.config.getHttpReadTimeout(),
@@ -98,12 +105,13 @@ public class RestInvocationHandler implements InvocationHandler {
                 this.config.getSslSocketFactory(), this.config.getHostnameVerifier(), this.config.getOAuthConsumer());
     }
 
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    @Override
+    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
         if (method.getDeclaringClass().equals(Object.class)) {
             return method.invoke(this, args);
         }
 
-        RestMethodMetadata methodMetadata = getMetadata(method);
+        final RestMethodMetadata methodMetadata = getMetadata(method);
 
         HttpURLConnection connection = null;
         RestInvocation invocation = null;
@@ -118,13 +126,13 @@ public class RestInvocationHandler implements InvocationHandler {
                 connection = invokeHttp(invocation);
             }
             return receiveAndMap(methodMetadata, connection);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             boolean shouldWrap = config.isWrapUnexpectedExceptions();
             if (e instanceof InvocationAware) {
                 try {
                     ((InvocationAware) e).setInvocation(invocation);
                     shouldWrap = false;
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
                     log.warn("Failed to set invocation on the InvocationAware", ex);
                 }
             }
@@ -132,7 +140,7 @@ public class RestInvocationHandler implements InvocationHandler {
                 try {
                     ((HttpResponseAware) e).setResponseHeaders(connection.getHeaderFields());
                     shouldWrap = false;
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
                     log.warn("Failed to set response headers on the HttpReponseAware", ex);
                 }
             }
@@ -143,33 +151,35 @@ public class RestInvocationHandler implements InvocationHandler {
         }
     }
 
-    protected HttpURLConnection invokeHttp(RestInvocation invocation) throws IOException {
-        RestMethodMetadata methodMetadata = invocation.getMethodMetadata();
+    protected HttpURLConnection invokeHttp(final RestInvocation invocation) throws IOException {
+        final RestMethodMetadata methodMetadata = invocation.getMethodMetadata();
 
-        RequestWriter requestWriter = requestWriterResolver.resolveWriter(invocation.getMethodMetadata());
+        final RequestWriter requestWriter = requestWriterResolver.resolveWriter(invocation.getMethodMetadata());
         final String requestBody = requestWriter.writeBody(invocation);
 
-        return httpTemplate.send(invocation.getInvocationUrl(), requestBody, invocation.getAllHttpHeaders(), methodMetadata.getHttpMethod());
+        final Map<String, String> headers = invocation.getAllHttpHeaders();
+        headers.putAll(context.getHeaders());
+        return httpTemplate.send(invocation.getInvocationUrl(), requestBody,headers , methodMetadata.getHttpMethod());
     }
 
-    protected Object receiveAndMap(RestMethodMetadata methodMetadata, HttpURLConnection connection) throws IOException {
-        InvocationResult invocationResult = httpTemplate.receive(connection);
+    protected Object receiveAndMap(final RestMethodMetadata methodMetadata, final HttpURLConnection connection) throws IOException {
+        final InvocationResult invocationResult = httpTemplate.receive(connection);
         return mapInvocationResult(invocationResult, methodMetadata);
     }
 
-    private static SynchronizedValueFactory getValueGenerator(Object[] args) {
-        if (args != null) for (Object arg : args)
+    private static SynchronizedValueFactory getValueGenerator(final Object[] args) {
+        if (args != null) for (final Object arg : args)
             if (arg instanceof SynchronizedValueFactory)
                 return (SynchronizedValueFactory) arg;
         return null;
     }
 
-    protected Object mapInvocationResult(InvocationResult invocationResult,
-            RestMethodMetadata methodMetadata) throws IOException {
+    protected Object mapInvocationResult(final InvocationResult invocationResult,
+                                         final RestMethodMetadata methodMetadata) throws IOException {
         return responseReaderResolver.resolveReader(methodMetadata).read(invocationResult, methodMetadata);
     }
 
-    private RestMethodMetadata getMetadata(Method method) {
+    private RestMethodMetadata getMetadata(final Method method) {
         RestMethodMetadata metadata = methodMetadataCache.get(method);
         if (metadata == null) {
             metadata = RestMethodMetadata.create(method, baseUrl, intfacePath);
