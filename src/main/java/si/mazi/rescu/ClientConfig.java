@@ -22,17 +22,19 @@
  */
 package si.mazi.rescu;
 
+import java.lang.annotation.Annotation;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import oauth.signpost.OAuthConsumer;
 import si.mazi.rescu.serialization.jackson.DefaultJacksonObjectMapperFactory;
 import si.mazi.rescu.serialization.jackson.JacksonConfigureListener;
 import si.mazi.rescu.serialization.jackson.JacksonObjectMapperFactory;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
-import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ClientConfig {
 
@@ -58,7 +60,7 @@ public class ClientConfig {
         wrapUnexpectedExceptions = Config.isWrapUnexpectedExceptions();
     }
 
-    public ClientConfig addDefaultParam(Class<? extends Annotation> paramType, String paramName, Object paramValue) {
+    public ClientConfig addDefaultParam(final Class<? extends Annotation> paramType, final String paramName, final Object paramValue) {
         Params params = defaultParamsMap.get(paramType);
         if (params == null) {
             params = Params.of();
@@ -88,7 +90,7 @@ public class ClientConfig {
      *
      * @param sslSocketFactory the sslSocketFactory to set
      */
-    public void setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
+    public void setSslSocketFactory(final SSLSocketFactory sslSocketFactory) {
         this.sslSocketFactory = sslSocketFactory;
     }
 
@@ -108,7 +110,7 @@ public class ClientConfig {
      *
      * @param hostnameVerifier the hostnameVerifier to set
      */
-    public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+    public void setHostnameVerifier(final HostnameVerifier hostnameVerifier) {
         this.hostnameVerifier = hostnameVerifier;
     }
 
@@ -116,7 +118,7 @@ public class ClientConfig {
         return httpConnTimeout;
     }
 
-    public void setHttpConnTimeout(int httpConnTimeout) {
+    public void setHttpConnTimeout(final int httpConnTimeout) {
         this.httpConnTimeout = httpConnTimeout;
     }
 
@@ -124,7 +126,7 @@ public class ClientConfig {
         return httpReadTimeout;
     }
 
-    public void setHttpReadTimeout(int httpReadTimeout) {
+    public void setHttpReadTimeout(final int httpReadTimeout) {
         this.httpReadTimeout = httpReadTimeout;
     }
 
@@ -132,7 +134,7 @@ public class ClientConfig {
         return proxyPort;
     }
 
-    public void setProxyPort(Integer proxyPort) {
+    public void setProxyPort(final Integer proxyPort) {
         this.proxyPort = proxyPort;
     }
 
@@ -140,7 +142,7 @@ public class ClientConfig {
         return proxyHost;
     }
 
-    public void setProxyHost(String proxyHost) {
+    public void setProxyHost(final String proxyHost) {
         this.proxyHost = proxyHost;
     }
 
@@ -148,7 +150,7 @@ public class ClientConfig {
         return ignoreHttpErrorCodes;
     }
 
-    public void setIgnoreHttpErrorCodes(boolean ignoreHttpErrorCodes) {
+    public void setIgnoreHttpErrorCodes(final boolean ignoreHttpErrorCodes) {
         this.ignoreHttpErrorCodes = ignoreHttpErrorCodes;
     }
 
@@ -156,7 +158,7 @@ public class ClientConfig {
         return wrapUnexpectedExceptions;
     }
 
-    public void setWrapUnexpectedExceptions(boolean wrapUnexpectedExceptions) {
+    public void setWrapUnexpectedExceptions(final boolean wrapUnexpectedExceptions) {
         this.wrapUnexpectedExceptions = wrapUnexpectedExceptions;
     }
 
@@ -178,7 +180,7 @@ public class ClientConfig {
             throw new IllegalStateException("Can't have both JacksonObjectMapperFactory and JacksonConfigureListener set. Please use only JacksonObjectMapperFactory.");
         }
         jacksonObjectMapperFactory = new DefaultJacksonObjectMapperFactory() {
-            @Override public void configureObjectMapper(ObjectMapper objectMapper) {
+            @Override public void configureObjectMapper(final ObjectMapper objectMapper) {
                 super.configureObjectMapper(objectMapper);
                 jacksonConfigureListener.configureObjectMapper(objectMapper);
             }
@@ -197,7 +199,7 @@ public class ClientConfig {
      * @param jacksonObjectMapperFactory the jacksonObjectMapperFactory to set
      * @see JacksonObjectMapperFactory
      */
-    public void setJacksonObjectMapperFactory(JacksonObjectMapperFactory jacksonObjectMapperFactory) {
+    public void setJacksonObjectMapperFactory(final JacksonObjectMapperFactory jacksonObjectMapperFactory) {
         this.jacksonObjectMapperFactory = jacksonObjectMapperFactory;
     }
 
@@ -205,7 +207,7 @@ public class ClientConfig {
         return oAuthConsumer;
     }
 
-    public void setOAuthConsumer(OAuthConsumer oAuthConsumer) {
+    public void setOAuthConsumer(final OAuthConsumer oAuthConsumer) {
         this.oAuthConsumer = oAuthConsumer;
     }
 
