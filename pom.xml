@@ -14,7 +14,7 @@
     FROM, ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
     IN THE ~ SOFTWARE. ~ -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.mmazi</groupId>
     <artifactId>rescu</artifactId>
@@ -84,6 +84,11 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${version.jackson}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -181,7 +186,8 @@
                         </executions>
                         <configuration>
                             <keyname>Matija Mazi (Maven Central)
-                                &lt;matija.mazi@gmail.com&gt;</keyname>
+                                &lt;matija.mazi@gmail.com&gt;
+                            </keyname>
                         </configuration>
                     </plugin>
                 </plugins>

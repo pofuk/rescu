@@ -21,27 +21,25 @@
  */
 package si.mazi.rescu;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import si.mazi.rescu.serialization.PlainTextResponseReader;
 import si.mazi.rescu.serialization.ToStringRequestWriter;
 import si.mazi.rescu.serialization.jackson.DefaultJacksonObjectMapperFactory;
 import si.mazi.rescu.serialization.jackson.JacksonObjectMapperFactory;
 import si.mazi.rescu.serialization.jackson.JacksonRequestWriter;
 import si.mazi.rescu.serialization.jackson.JacksonResponseReader;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Matija Mazi
@@ -57,25 +55,21 @@ public class RestInvocationHandler implements InvocationHandler {
     private final String intfacePath;
     private final String baseUrl;
     private ApiContext context;
-    private ClientConfig config;
 
 
     private final Map<Method, RestMethodMetadata> methodMetadataCache = new HashMap<>();
 
     RestInvocationHandler(final Class<?> restInterface, final String url, final ApiContext context) {
+        Validate.notNull(restInterface);
+        Validate.notNull(url);
+        Validate.notNull(context);
+
         this.intfacePath = restInterface.getAnnotation(Path.class).value();
         this.baseUrl = url;
-
-        if (config == null) {
-            this.context = new DefaultApiContext();
-            this.config =  context.getClientConfig();
-        }
-
         this.context = context;
-        this.config = context.getClientConfig();
 
         //setup default readers/writers
-        JacksonObjectMapperFactory mapperFactory = config.getJacksonObjectMapperFactory();
+        JacksonObjectMapperFactory mapperFactory = context.getClientConfig().getJacksonObjectMapperFactory();
         if (mapperFactory == null) {
             mapperFactory = new DefaultJacksonObjectMapperFactory();
         }
@@ -93,16 +87,16 @@ public class RestInvocationHandler implements InvocationHandler {
 
         responseReaderResolver = new ResponseReaderResolver();
         responseReaderResolver.addReader(MediaType.APPLICATION_JSON,
-                new JacksonResponseReader(mapper, this.config.isIgnoreHttpErrorCodes()));
+                new JacksonResponseReader(mapper, this.context.getClientConfig().isIgnoreHttpErrorCodes()));
         responseReaderResolver.addReader(MediaType.TEXT_PLAIN,
-                new PlainTextResponseReader(this.config.isIgnoreHttpErrorCodes()));
+                new PlainTextResponseReader(this.context.getClientConfig().isIgnoreHttpErrorCodes()));
 
         //setup http client
         this.httpTemplate = new HttpTemplate(
-                this.config.getHttpConnTimeout(),
-                this.config.getHttpReadTimeout(),
-                this.config.getProxyHost(), this.config.getProxyPort(),
-                this.config.getSslSocketFactory(), this.config.getHostnameVerifier(), this.config.getOAuthConsumer());
+                this.context.getClientConfig().getHttpConnTimeout(),
+                this.context.getClientConfig().getHttpReadTimeout(),
+                this.context.getClientConfig().getProxyHost(), this.context.getClientConfig().getProxyPort(),
+                this.context.getClientConfig().getSslSocketFactory(), this.context.getClientConfig().getHostnameVerifier(), this.context.getClientConfig().getOAuthConsumer());
     }
 
     @Override
@@ -122,12 +116,12 @@ public class RestInvocationHandler implements InvocationHandler {
         try {
             synchronized (lock) {
                 invocation = RestInvocation.create(
-                        requestWriterResolver, methodMetadata, args, config.getDefaultParamsMap());
+                        requestWriterResolver, methodMetadata, args, context.getClientConfig().getDefaultParamsMap());
                 connection = invokeHttp(invocation);
             }
             return receiveAndMap(methodMetadata, connection);
         } catch (final Exception e) {
-            boolean shouldWrap = config.isWrapUnexpectedExceptions();
+            boolean shouldWrap = context.getClientConfig().isWrapUnexpectedExceptions();
             if (e instanceof InvocationAware) {
                 try {
                     ((InvocationAware) e).setInvocation(invocation);

@@ -41,7 +41,7 @@ class TestRestInvocationHandler extends RestInvocationHandler {
 
     public TestRestInvocationHandler(final Class<?> restInterface, final ClientConfig config,
                                      final String responseBody, final int responseStatusCode, final String baseUrl) {
-        super(restInterface, baseUrl, new ApiContext() {
+        super(restInterface, baseUrl, config == null ? new DefaultApiContext() : new ApiContext() {
 
             @Override
             public Map<String, String> getHeaders() {

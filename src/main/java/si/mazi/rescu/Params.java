@@ -101,7 +101,7 @@ public final class Params implements Serializable {
         for (String paramName : data.keySet()) {
             if (isParamSet(paramName)) {
                 Object originalValue = getParamValue(paramName);
-                boolean createArrayParameters = originalValue instanceof Iterable && paramName.endsWith("[]");
+                boolean createArrayParameters = originalValue instanceof Iterable;
                 @SuppressWarnings("unchecked")
                 Iterable<Object> paramValues = createArrayParameters
                         ? (Iterable<Object>)originalValue

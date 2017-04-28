@@ -88,17 +88,6 @@ public class RestInvocationTest {
     }
 
     @Test
-    public void testFormPostCollectionDefault() throws Exception {
-        TestRestInvocationHandler testHandler = new TestRestInvocationHandler(ExampleService.class, new ClientConfig(), null, 200);
-        ExampleService proxy = RestProxyFactory.createProxy(ExampleService.class, testHandler);
-
-        proxy.testFromPostCollection(Arrays.asList("first", "second"));
-
-        final String requestBody = URLDecoder.decode(testHandler.getInvocation().getRequestBody(), "UTF-8");
-        assertThat(requestBody).contains("data=first,second");
-    }
-
-    @Test
     public void testFormPostCollectionArray() throws Exception {
         ClientConfig config = new ClientConfig();
 
@@ -108,8 +97,8 @@ public class RestInvocationTest {
         proxy.testFromPostCollectionAsArray(Arrays.asList("first", "second"));
 
         final String requestBody = testHandler.getInvocation().getRequestBody();
-        assertThat(requestBody).contains("data[]=first");
-        assertThat(requestBody).contains("data[]=second");
+        assertThat(requestBody).contains("data=first");
+        assertThat(requestBody).contains("data=second");
     }
 
     @Test

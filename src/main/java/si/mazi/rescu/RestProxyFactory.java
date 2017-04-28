@@ -56,7 +56,7 @@ public final class RestProxyFactory {
     }
 
     public static <I> I createProxy(final Class<I> restInterface, final String baseUrl) {
-        return createProxy(restInterface, baseUrl, null);
+        return createProxy(restInterface, baseUrl, new DefaultApiContext());
     }
 
     static <I> I createProxy(final Class<I> restInterface, final InvocationHandler restInvocationHandler, final Interceptor... interceptors) {

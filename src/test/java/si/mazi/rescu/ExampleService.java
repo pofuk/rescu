@@ -137,7 +137,7 @@ public interface ExampleService {
     @POST
     @Path("formPostCollection")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    Object testFromPostCollectionAsArray(@FormParam("data[]") List<String> data);
+    Object testFromPostCollectionAsArray(@FormParam("data") List<String> data);
 
     @POST
     @Path("dateQueryParam")
